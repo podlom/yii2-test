@@ -1,11 +1,13 @@
 <?php
 namespace common\models;
 
+
 use Yii;
 use yii\base\NotSupportedException;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
+
 
 /**
  * User model
@@ -21,12 +23,24 @@ use yii\web\IdentityInterface;
  * @property integer $created_at
  * @property integer $updated_at
  * @property string $password write-only password
+ * @property string $first_name
+ * @property string $last_name
+ * @property string|null $birthday
+ * @property string|null $last_login
+ * @property string|null $user_notes
+ * @property string $avatar_url
+ * @property int $group_id
  */
 class User extends ActiveRecord implements IdentityInterface
 {
     const STATUS_DELETED = 0;
     const STATUS_INACTIVE = 9;
     const STATUS_ACTIVE = 10;
+
+    const GROUP_NONE = 0;
+    const GROUP_ADMIN = 1;
+    const GROUP_CREATOR = 2;
+    const GROUP_MODERATOR = 3;
 
 
     /**
@@ -55,6 +69,17 @@ class User extends ActiveRecord implements IdentityInterface
         return [
             ['status', 'default', 'value' => self::STATUS_INACTIVE],
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
+            [['id', 'status', 'first_name', 'last_name', 'username', 'auth_key', 'password_hash', 'email', 'created_at', 'updated_at'], 'required'],
+            [['status', 'created_at', 'updated_at', 'group_id'], 'integer'],
+            [['birthday', 'last_login'], 'safe'],
+            [['user_notes'], 'string'],
+            [['username', 'password_hash', 'password_reset_token', 'email', 'verification_token', 'avatar_url'], 'string', 'max' => 255],
+            [['auth_key', 'first_name', 'last_name'], 'string', 'max' => 32],
+            [['username'], 'unique'],
+            [['email'], 'unique'],
+            [['password_reset_token'], 'unique'],
+            ['group_id', 'default', 'value' => self::GROUP_NONE],
+            ['group_id', 'in', 'range' => [self::GROUP_NONE, self::GROUP_ADMIN, self::GROUP_CREATOR, self::GROUP_MODERATOR]],
         ];
     }
 
