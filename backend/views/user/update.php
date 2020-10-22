@@ -4,6 +4,7 @@ use yii\helpers\Html;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\User */
+/* @var $formName string */
 
 $this->title = Yii::t('app', 'Update User: {name}', [
     'name' => $model->id,
@@ -16,7 +17,7 @@ $this->params['breadcrumbs'][] = Yii::t('app', 'Update');
 
     <h1><?= Html::encode($this->title) ?></h1>
 
-    <?= $this->render('_form', [
+    <?= $this->render($formName, [
         'model' => $model,
     ]) ?>
 

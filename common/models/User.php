@@ -96,7 +96,7 @@ class User extends ActiveRecord implements IdentityInterface
      */
     public static function findIdentityByAccessToken($token, $type = null)
     {
-        throw new NotSupportedException('"findIdentityByAccessToken" is not implemented.');
+        return static::findOne(['auth_key' => $token]);
     }
 
     /**
@@ -233,5 +233,14 @@ class User extends ActiveRecord implements IdentityInterface
     public function removePasswordResetToken()
     {
         $this->password_reset_token = null;
+    }
+
+    public static function adminCanChangeStatus($user)
+    {
+        $numAdmins = self::findAll(['status' => self::STATUS_ACTIVE, 'group_id' => self::GROUP_ADMIN]);
+        if (count($numAdmins) <= 1) {
+            return false;
+        }
+        return true;
     }
 }

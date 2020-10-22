@@ -2,12 +2,15 @@
 
 namespace backend\controllers;
 
+
 use Yii;
 use common\models\User;
 use backend\models\UserSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
+use yii\web\ForbiddenHttpException;
 use yii\filters\VerbFilter;
+
 
 /**
  * UserController implements the CRUD actions for User model.
@@ -61,9 +64,19 @@ class UserController extends Controller
      * Creates a new User model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @throws ForbiddenHttpException if admin user does not have access
      */
     public function actionCreate()
     {
+        /* if (!!Yii::$app->user->can('createUser')) {
+            throw new ForbiddenHttpException('This user can`t create new users.');
+        } */
+
+        $user = Yii::$app->user->identity;
+        if (($user->group_id !== 1) && $user->group_id !== 2) {
+            throw new ForbiddenHttpException('User with group id ' . var_export($user->group_id, true) . ' can`t create new users.');
+        }
+
         $model = new User();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
@@ -81,9 +94,32 @@ class UserController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @throws ForbiddenHttpException if admin user does not have access
      */
     public function actionUpdate($id)
     {
+        if (!Yii::$app->user->can('updateUser')) {
+            throw new ForbiddenHttpException('User can`t update users.');
+        }
+
+        $user = Yii::$app->user->identity;
+        if (($user->group_id !== 1) && ($user->group_id !== 3)) {
+            throw new ForbiddenHttpException('User with group id ' . var_export($user->group_id, true) . ' can`t update other users data.');
+        }
+
+        $postUserId = Yii::$app->request->post('User')['id'];
+        if (Yii::$app->request->isPost && !is_null($postUserId) && ($user->getId() == $postUserId)) {
+            $resCanChangeStatus = User::adminCanChangeStatus($user);
+            if (!$resCanChangeStatus) {
+                throw new ForbiddenHttpException('Can`t change admin user status to ' . var_export(Yii::$app->request->post('User')['status'], true));
+            }
+        }
+
+        $formName = '_form';
+        if ($user->group_id == 3) {
+            $formName = '_form_moderator';
+        }
+
         $model = $this->findModel($id);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
@@ -92,6 +128,7 @@ class UserController extends Controller
 
         return $this->render('update', [
             'model' => $model,
+            'formName' => $formName,
         ]);
     }
 
@@ -101,9 +138,19 @@ class UserController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @throws ForbiddenHttpException if admin user does not have access
      */
     public function actionDelete($id)
     {
+        if (!Yii::$app->user->can('updateUser')) {
+            throw new ForbiddenHttpException('User can`t delete users.');
+        }
+
+        $user = Yii::$app->user->identity;
+        if ($user->group_id !== 1) {
+            throw new ForbiddenHttpException('User with group id ' . var_export($user->group_id, true) . ' can`t remove users.');
+        }
+
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);
