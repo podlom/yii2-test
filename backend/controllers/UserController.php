@@ -108,7 +108,7 @@ class UserController extends Controller
         }
 
         $postUserId = Yii::$app->request->post('User')['id'];
-        if (Yii::$app->request->isPost && !is_null($postUserId) && ($user->getId() == $postUserId)) {
+        if (Yii::$app->request->isPost && !is_null($postUserId)) {
             $resCanChangeStatus = User::adminCanChangeStatus($user);
             if (!$resCanChangeStatus) {
                 throw new ForbiddenHttpException('Can`t change admin user status to ' . var_export(Yii::$app->request->post('User')['status'], true));
